@@ -1,0 +1,7 @@
+.env
+*.ipynb
+.venv/
+__pycache__/
+*.csv
+*.json
+!schema.json
