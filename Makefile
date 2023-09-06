@@ -14,10 +14,6 @@ install:
 	poetry run pip install google-cloud-aiplatform
 	poetry run pip install protobuf==3.20
 
-.PHONY: pipeline
-pipeline:
-	poetry run python pipeline.py
-
 .PHONY: streamlit
 streamlit:
 	poetry run streamlit run app.py

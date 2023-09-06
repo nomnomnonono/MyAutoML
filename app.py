@@ -6,6 +6,7 @@ from google.cloud import storage
 from dotenv import load_dotenv
 import json
 from io import BytesIO
+from exec_train import exec_train_job
 
 
 def upload(bucket, local_folder_path):
@@ -87,12 +88,11 @@ def main():
     bucket = client.bucket(os.environ.get("DATA_BUCKET").lstrip("gs://"))
 
     st.title("MyAutoML")
-
     tab1, tab2, tab3 = st.tabs(["Upload Dataset", "Train/Eval Model", "Deploy Model"])
 
     with tab1:
         paths = glob.glob("data/*")
-        local_folder_path = st.selectbox("Select Dataset to Upload", paths)
+        local_folder_path = st.selectbox("Select Dataset to Upload", [os.path.split(path)[-1] for path in paths])
         if st.button("Click on the button to upload", key="upload_button", help='このボタンをクリックしてアクションを実行します'):
             try:
                 upload(bucket, local_folder_path)
@@ -125,8 +125,61 @@ def main():
                     
         #### タスクごとのフォルダ構造
         ##### table
+        ```bash
+        data/
+        ├── xxx
+        │   ├── train/
+        │   │   └── *.csv
+        │   ├── valid/
+        │   │   └── *.csv
+        │   ├── test/
+        │   │   └── *.csv
+        │   └── config.json
+        ├── yyy
+        ...
+        ```
+        ターゲットラベルのカラム名は`target`とする。
+
         ##### text
+        ```bash
+        data/
+        ├── xxx
+        │   ├── train/
+        │   │   └── *.csv
+        │   ├── valid/
+        │   │   └── *.csv
+        │   ├── test/
+        │   │   └── *.csv
+        │   └── config.json
+        ├── yyy
+        ...
+        ```
+        ターゲットラベルのカラム名は`target`とする。
+
         ##### image
+        ```bash
+        data/
+        ├── xxx
+        │   ├── train/
+        │   │   ├── images/
+        │   │   │   ├── *.png
+        │   │   │   ...
+        │   │   └── *.csv
+        │   ├── valid/
+        │   │   ├── images/
+        │   │   │   ├── *.png
+        │   │   │   ...
+        │   │   └── *.csv
+        │   ├── test/
+        │   │   ├── images/
+        │   │   │   ├── *.png
+        │   │   │   ...
+        │   │   └── *.csv
+        │   └── config.json
+        ├── yyy
+        ...
+        ```
+        ターゲットラベルのカラム名は`target`とする。
         """)
 
     with tab2:
@@ -140,11 +193,17 @@ def main():
         model = st.selectbox("Model", get_model_list(config["data_type"], config["target_task"]))
         main_metric = st.selectbox("Main Metric", get_metric_list(config["data_type"], config["target_task"]))
         sub_metric = st.multiselect("Sub Metric", get_metric_list(config["data_type"], config["target_task"]))
+        machine_type = st.selectbox("Machine Type", ("n1-standard-4",))
         if st.button("Submit", key='submit_button', help='このボタンをクリックしてアクションを実行します'):
-            print("submit")
+            try:
+                exec_train_job(dataset, config["data_type"], config["target_task"], model, main_metric, sub_metric, machine_type)
+                st.text("Train Success")
+            except Exception as e:
+                print(e)
+                st.text("Train Failed")
 
     with tab3:
-        st.selectbox("selectbox", ("select1", "select2"))
+        st.selectbox("Select Model to Deploy", ("select1", "select2"))
 
 
 if __name__ == "__main__":

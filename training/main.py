@@ -1,47 +1,37 @@
 import argparse
-from pathlib import Path
+import os
+import re
 
-import joblib
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
+from table import train_table
 
 
-def run(dataset_uri: str, artifact_uri: str) -> None:
-    dataset_dir = Path(dataset_uri)
-    df_train = pd.read_csv(dataset_dir / "train.csv")
-    df_val = pd.read_csv(dataset_dir / "val.csv")
-    print(f"Data size: train: {df_train.shape}, val: {df_val.shape}")
+def get_fuse_path(path: str) -> str:
+    pattern = "gs://(?P<bucket>[^/]+)/(?P<key>.+)"
+    match = re.match(pattern, path)
+    return f"/gcs/{match.group('bucket')}/{match.group('key')}"
 
-    x_train, y_train = df_train["title"], df_train["target"]
-    x_val, y_val = df_val["title"], df_val["target"]
 
-    vectorizer = TfidfVectorizer()
-    x_train, x_val = vectorizer.fit_transform(x_train), vectorizer.transform(x_val)
+def run(dataset: str, data_type: str, target_task: str, model: str, main_metric: str, sub_metric: list[str]) -> None:
+    data_fuse_path = get_fuse_path(dataset)
+    model_fuse_path = get_fuse_path(os.getenv("AIP_MODEL_DIR"))
 
-    model = LogisticRegression(random_state=42)
-    model.fit(x_train, y_train)
-
-    y_pred = model.predict(x_train)
-    acc_train = accuracy_score(y_train, y_pred)
-    print(f"Train accuracy: {acc_train}")
-
-    y_pred = model.predict(x_val)
-    acc_val = accuracy_score(y_val, y_pred)
-    print(f"Validation accuracy: {acc_val}")
-
-    model_dir = Path(artifact_uri)
-    model_dir.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, model_dir / "model.joblib")
-    joblib.dump(vectorizer, model_dir / "vectorizer.joblib")
-    print(f"Save model in: {artifact_uri}")
+    if data_type == "tabel":
+        train_table(data_fuse_path, model_fuse_path, target_task, model, main_metric, sub_metric)
+    elif data_type == "text":
+        pass
+    elif data_type == "image":
+        pass
+    else:
+        raise ValueError(f"Invalid data_type: {data_type}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train")
-    parser.add_argument("--dataset-uri", type=str)
-    parser.add_argument("--artifact-uri", type=str)
-
+    parser.add_argument("--dataset", type=str)
+    parser.add_argument("--data_type", type=str)
+    parser.add_argument("--target_task", type=str)
+    parser.add_argument("--model", type=str)
+    parser.add_argument("--main_metric", type=str)
+    parser.add_argument("--sub_metric", type=list[str])
     args = parser.parse_args()
     run(**vars(args))

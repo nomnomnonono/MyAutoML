@@ -7,4 +7,4 @@ RUN poetry config virtualenvs.create false && poetry install
 
 COPY . .
 
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT python main.py
