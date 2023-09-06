@@ -26,16 +26,15 @@ $ vi .env
 - 以下の情報を記入＋環境変数としてexportしておく
 ```bash
 GCP_PROJECT_ID=your project id
-TOPIC_ID=your topic id
-AR_REPOSITORY_NAME=artifact registory repository name
 LOCATION=asia-northeast1
+AR_REPOSITORY_NAME=artifact registory repository name
 DATA_BUCKET=gs://xxx
-SOURCE_CSV_URI=gs://xxx/data.csv
-CONFIG_FILE_URI=gs:/xxx/config.json
-ROOT_BUCKET=gs://yyy
-PIPELINE_NAME=vertex ai pipelines name
 ```
 
+### other
+```bash
+gsutil mb ${DATA_BUCKET}
+```
 ## Boot MLflow Server
 ```bash
 $ make mlflow

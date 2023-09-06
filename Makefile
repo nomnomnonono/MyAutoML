@@ -18,6 +18,10 @@ install:
 pipeline:
 	poetry run python pipeline.py
 
+.PHONY: streamlit
+streamlit:
+	poetry run streamlit run app.py
+
 .PHONY: mlflow
 mlflow:
 	poetry run mlflow ui
