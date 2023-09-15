@@ -1,6 +1,4 @@
-# ML-Pipeline-of-Paper-Category-Classification
-Arxiv APIで取得した論文データについて、タイトルから主カテゴリを予測する分類器を学習、デプロイする
-
+# MyAutoML
 ## Requirements
 - Poetry
 - gcloud CLI
