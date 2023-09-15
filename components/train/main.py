@@ -20,16 +20,16 @@ def train(
     artifact_uri: OutputPath("Model"),
     metrics: Output[Metrics],
 ) -> None:
-    if data_type == "tabel":
-        from components.train.table import train_table
+    if data_type == "table":
+        from table import train_table
 
         train_table(
-            dataset_uri,
-            artifact_uri,
-            metrics,
-            target_task,
-            model_name,
-            main_metric,
+            dataset_uri=dataset_uri,
+            target_task=target_task,
+            model_name=model_name,
+            main_metric=main_metric,
+            artifact_uri=artifact_uri,
+            metrics=metrics,
         )
     elif data_type == "text":
         pass

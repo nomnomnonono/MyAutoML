@@ -4,7 +4,6 @@ from pathlib import Path
 
 import joblib
 import lightgbm as lgb
-import pandas as pd
 import xgboost as xgb
 from kfp.v2.dsl import InputPath, Metrics, Output, OutputPath
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -23,7 +22,7 @@ def train_table(
     metrics: Output[Metrics],
 ) -> None:
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_table_dataset(dataset_uri)
-    metric_list = get_table_metric_dict("table", target_task)
+    metric_list = get_table_metric_dict(target_task)
     if len(metric_list[main_metric]) == 2:
         main_metric, is_high = metric_list[main_metric]
     elif len(metric_list[main_metric]) == 3:

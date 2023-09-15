@@ -34,8 +34,8 @@ ARTIFACT_BUCKET=gs://yyy
 
 ### Create Cloud Storage Bucket
 ```bash
-gsutil mb ${DATA_BUCKET}
-gsutil mb ${ARTIFACT_BUCKET}
+$ gsutil mb -l $LOCATION $DATA_BUCKET
+$ gsutil mb -l $LOCATION $ARTIFACT_BUCKET
 ```
 
 ## Build & Push Docker Image

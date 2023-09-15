@@ -97,7 +97,7 @@ def exec_pipeline(
         job_id=f"{dataset}-{model_name}".lower()
         + f"-{datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')[:-4]}",
         pipeline_root=ARTIFACT_BUCKET,
-        enable_caching=False,
+        enable_caching=True,
         project=PROJECT_ID,
         location=LOCATION,
         parameter_values={

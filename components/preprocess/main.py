@@ -24,9 +24,13 @@ def preprocess(
         dataset_dir = Path(dataset_uri)
         dataset_dir.mkdir(parents=True, exist_ok=True)
         for split in ["train", "valid", "test"]:
-            df = pd.read_csv(glob.glob(os.path.join(data_path, split, "*.csv"))[0])
+            df = pd.read_csv(
+                glob.glob(
+                    os.path.join("/gcs", data_path.lstrip("gs://"), split, "*.csv")
+                )[0]
+            )
             print(
-                f"Load CSV from: {glob.glob(os.path.join(data_path, split, '*.csv'))[0]}"
+                f"Load CSV from: {glob.glob(os.path.join('/gcs', data_path.lstrip('gs://'), split, '*.csv'))[0]}"
             )
 
             # preprocess
