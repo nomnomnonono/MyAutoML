@@ -34,15 +34,19 @@ def train_table(
         if model_name == "LogisticRegression":
             model_obj = LogisticRegression
             params = {
-                "penalty": ["l1", "l2"],
+                "penalty": [None, "l1", "l2"],
                 "C": [0.1, 1.0, 10],
+                "solver": ["saga"],
+                "max_iter": [1000],
                 "random_state": SEEDS,
             }
         elif model_name == "RandomForestClassifier":
             model_obj = RandomForestClassifier
             params = {
-                "n_estimators": [10, 100],
-                "max_depth": [3, 5],
+                "n_estimators": [10, 50, 100, 500],
+                "max_features": ["sqrt", "log2"],
+                "max_depth": [None, 5, 10],
+                "criterion": ["gini", "entropy"],
                 "random_state": SEEDS,
             }
         elif model_name == "LightGBMClassifier":
@@ -86,23 +90,30 @@ def train_table(
             "train": (x_train, y_train),
             "valid": (x_valid, y_valid),
             "test": (x_test, y_test),
-        }:
+        }.items():
             pred = model.predict(data[0])
-            log_table_metrics(split, data[1], pred, metric_list, metrics)
+            log_table_metrics(
+                split,
+                data[1],
+                pred,
+                metric_list,
+                metrics,
+                is_multi=len(y_train.unique()) != 2,
+            )
 
     elif target_task == "regression":
         if model_name == "LinearRegression":
             model = LinearRegression
             params = {
-                "penalty": ["l1", "l2"],
-                "C": [0.1, 1.0, 10],
                 "random_state": SEEDS,
             }
         elif model_name == "RandomForestRegressor":
             model = RandomForestRegressor
             params = {
-                "n_estimators": [10, 100],
-                "max_depth": [3, 5],
+                "n_estimators": [10, 50, 100, 500],
+                "max_features": ["sqrt", "log2"],
+                "max_depth": [None, 5, 10],
+                "criterion": ["gini", "entropy"],
                 "random_state": SEEDS,
             }
         elif model_name == "LightGBMRegressor":
@@ -146,7 +157,7 @@ def train_table(
             "train": (x_train, y_train),
             "valid": (x_valid, y_valid),
             "test": (x_test, y_test),
-        }:
+        }.items():
             pred = model.predict(data[0])
             log_table_metrics(split, data[1], pred, metric_list, metrics)
 

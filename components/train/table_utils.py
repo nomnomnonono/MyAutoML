@@ -56,7 +56,19 @@ def log_table_metrics(
     pred: np.ndarray,
     metric_dict: dict[str, tuple],
     metrics: Output[Metrics],
+    is_multi: bool = False,
 ):
-    for metric_name, metric_value in metric_dict.keys():
-        score = metric_value[0](label, pred)
-        metrics.log_metric(f"{split}/{metric_name.lower()}", score)
+    for metric_name, metric_value in metric_dict.items():
+        if metric_name == "Accuracy":
+            score = metric_value[0](label, pred)
+            metrics.log_metric(f"{split}/{metric_name.lower()}", score)
+        else:
+            if is_multi:
+                for average in ["micro", "macro"]:
+                    score = metric_value[0](label, pred, average=average)
+                    metrics.log_metric(
+                        f"{split}/{average}-{metric_name.lower()}", score
+                    )
+            else:
+                score = metric_value[0](label, pred)
+                metrics.log_metric(f"{split}/{metric_name.lower()}", score)
