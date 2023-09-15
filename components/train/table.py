@@ -18,6 +18,7 @@ def train_table(
     target_task: str,
     model_name: str,
     main_metric: str,
+    params: dict[str, list],
     artifact_uri: OutputPath("Model"),
     metrics: Output[Metrics],
 ) -> None:
@@ -33,22 +34,8 @@ def train_table(
     if target_task == "classification":
         if model_name == "LogisticRegression":
             model_obj = LogisticRegression
-            params = {
-                "penalty": [None, "l1", "l2"],
-                "C": [0.1, 1.0, 10],
-                "solver": ["saga"],
-                "max_iter": [1000],
-                "random_state": SEEDS,
-            }
         elif model_name == "RandomForestClassifier":
             model_obj = RandomForestClassifier
-            params = {
-                "n_estimators": [10, 50, 100, 500],
-                "max_features": ["sqrt", "log2"],
-                "max_depth": [None, 5, 10],
-                "criterion": ["gini", "entropy"],
-                "random_state": SEEDS,
-            }
         elif model_name == "LightGBMClassifier":
             model_obj = lgb.LGBMClassifier
             params = {
@@ -104,18 +91,8 @@ def train_table(
     elif target_task == "regression":
         if model_name == "LinearRegression":
             model = LinearRegression
-            params = {
-                "random_state": SEEDS,
-            }
         elif model_name == "RandomForestRegressor":
             model = RandomForestRegressor
-            params = {
-                "n_estimators": [10, 50, 100, 500],
-                "max_features": ["sqrt", "log2"],
-                "max_depth": [None, 5, 10],
-                "criterion": ["gini", "entropy"],
-                "random_state": SEEDS,
-            }
         elif model_name == "LightGBMRegressor":
             model = lgb.LGBMRegressor
             params = {

@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import json
 import os
 
 from dotenv import load_dotenv
@@ -30,6 +31,7 @@ def pipeline(
     model_name: str,
     main_metric: str,
     machine_type: str,
+    params: str,
     is_train: bool,
 ) -> None:
     if is_train:
@@ -39,12 +41,17 @@ def pipeline(
             target_task=target_task,
         )
 
+        params = json.loads(params.replace("'", '"'))
+        for key, values in params.items():
+            params[key] = [None if value == "None" else value for value in values]
+
         train_op = train(
             dataset_uri=preprocess_op.output,
             data_type=data_type,
             target_task=target_task,
             model_name=model_name,
             main_metric=main_metric,
+            params=json.loads(params.replace("'", '"')),
         )
         train_op.custom_job_spec = {
             "jobSpec": {
@@ -123,6 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", type=str)
     parser.add_argument("--main_metric", type=str)
     parser.add_argument("--machine_type", type=str)
+    parser.add_argument("--params", type=str)
     parser.add_argument("--is_train", action="store_true")
     args = parser.parse_args()
 

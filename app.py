@@ -9,71 +9,9 @@ import streamlit as st
 from components.train.utils import get_metric_list
 from dotenv import load_dotenv
 from google.cloud import storage
+from utils import get_dataset_list, get_model_list, parameter_selection, upload
 
-
-def upload(bucket, local_folder_path):
-    file_paths = []
-    for dirpath, _, filenames in os.walk(local_folder_path):
-        for filename in filenames:
-            dirpath = "/".join(dirpath.split("/")[2:])
-            file_paths.append(os.path.join(dirpath, filename))
-
-    destination_folder_name = os.path.split(local_folder_path)[-1]
-    for file_path in file_paths:
-        destination_blob_name = os.path.join(destination_folder_name, file_path)
-        blob = bucket.blob(destination_blob_name)
-        blob.upload_from_filename(os.path.join(local_folder_path, file_path))
-
-
-def get_dataset_list(bucket):
-    blobs = bucket.list_blobs()
-    return list(set([blob.name.split("/")[0] for blob in blobs]))
-
-
-def get_model_list(data_type, target_task):
-    if data_type == "table":
-        if target_task == "classification":
-            return [
-                "LogisticRegression",
-                "RandomForestClassifier",
-                "XGBoostClassifier",
-                "LightGBMClassifier",
-            ]
-        elif target_task == "regression":
-            return [
-                "LinearRegression",
-                "RandomForestRegressor",
-                "XGBoostRegressor",
-                "LGMBRegressor",
-            ]
-        else:
-            return []
-    elif data_type == "text":
-        if target_task == "classification":
-            return ["TF-IDF + LogisticRegression", "BERT", "RoBERTa", "DEBERTa"]
-        elif target_task == "summarization":
-            return ["T5", "BertSum"]
-        else:
-            return []
-    elif data_type == "image":
-        if target_task == "classification":
-            return [
-                "ResNet18",
-                "ResNet34",
-                "ResNet50",
-                "EfficientNet",
-                "EfficientNetV2",
-                "MobileNetV2",
-                "MobileNetV3",
-            ]
-        elif target_task == "detection":
-            return ["Faster R-CNN", "SSD", "YOLOv5"]
-        elif target_task == "semantic-segmentation":
-            return ["U-Net", "DeepLabV3", "FCN", "LRASPP"]
-        else:
-            return []
-    else:
-        raise ValueError("data_type must be table, text or image")
+load_dotenv(".env")
 
 
 def main():
@@ -198,9 +136,11 @@ def main():
             "Main Metric", get_metric_list(config["data_type"], config["target_task"])
         )
         machine_type = st.selectbox("Machine Type", ("n1-standard-4",))
+        params = parameter_selection(model_name)
+        params = str(params).replace(" ", "")
         if st.button("Submit", key="submit_button", help="このボタンをクリックしてアクションを実行します"):
             try:
-                command = f"python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} --model_name {model_name} --main_metric {main_metric} --machine_type {machine_type} --is_train"
+                command = f"python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} --model_name {model_name} --main_metric {main_metric} --machine_type {machine_type} --params params --is_train"
                 proc = subprocess.run(command.split(" "), stdout=PIPE, stderr=PIPE)
                 if len(proc.stdout.decode("utf-8")) == 0:
                     st.text(proc.stderr.decode("utf-8"))
@@ -215,5 +155,4 @@ def main():
 
 
 if __name__ == "__main__":
-    load_dotenv(".env")
     main()
