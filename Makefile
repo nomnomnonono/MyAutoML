@@ -13,6 +13,7 @@ install:
 	poetry run pip install google-cloud-aiplatform
 	poetry run pip install streamlit
 	poetry run pip install altair==4.2.2
+
 .PHONY: streamlit
 streamlit:
 	poetry run streamlit run app.py

@@ -6,6 +6,7 @@ from io import BytesIO
 from subprocess import PIPE
 
 import streamlit as st
+from components.train.utils import get_metric_list
 from dotenv import load_dotenv
 from google.cloud import storage
 
@@ -75,40 +76,12 @@ def get_model_list(data_type, target_task):
         raise ValueError("data_type must be table, text or image")
 
 
-def get_metric_list(data_type, target_task):
-    if data_type == "table":
-        if target_task == "classification":
-            return ["Accuracy", "Precision", "Recall", "F1", "AUC"]
-        elif target_task == "regression":
-            return ["MSE", "RMSE", "MAE", "R2"]
-        else:
-            return []
-    elif data_type == "text":
-        if target_task == "classification":
-            return ["Accuracy", "Precision", "Recall", "F1", "AUC"]
-        elif target_task == "summarization":
-            return ["BLEU", "ROUGE", "BERTScore", "METEOR"]
-        else:
-            return []
-    elif data_type == "image":
-        if target_task == "classification":
-            return ["Accuracy", "Precision", "Recall", "F1", "AUC"]
-        elif target_task == "detection":
-            return ["mAP", "IoU"]
-        elif target_task == "semantic-segmentation":
-            return ["mIoU", "IoU", "Dice", "Jaccard"]
-        else:
-            return []
-    else:
-        raise ValueError("data_type must be table, text or image")
-
-
 def main():
     client = storage.Client()
     bucket = client.bucket(os.environ.get("DATA_BUCKET").lstrip("gs://"))
 
     st.title("MyAutoML")
-    tab1, tab2, tab3 = st.tabs(["Upload Dataset", "Train/Eval Model", "Deploy Model"])
+    tab1, tab2, tab3 = st.tabs(["Upload Dataset", "Train Model", "Deploy Model"])
 
     with tab1:
         paths = glob.glob("data/*")
@@ -121,7 +94,7 @@ def main():
             help="このボタンをクリックしてアクションを実行します",
         ):
             try:
-                upload(bucket, local_folder_path)
+                upload(bucket, os.path.join("data", local_folder_path))
                 st.text("Upload Success")
             except Exception as e:
                 print(e)
@@ -218,26 +191,21 @@ def main():
         config = json.load(BytesIO(content))
         st.selectbox("Data Type", (config["data_type"],))
         st.selectbox("Target Task", (config["target_task"],))
-        model = st.selectbox(
+        model_name = st.selectbox(
             "Model", get_model_list(config["data_type"], config["target_task"])
         )
         main_metric = st.selectbox(
             "Main Metric", get_metric_list(config["data_type"], config["target_task"])
         )
-        sub_metric = st.multiselect(
-            "Sub Metric", get_metric_list(config["data_type"], config["target_task"])
-        )
         machine_type = st.selectbox("Machine Type", ("n1-standard-4",))
         if st.button("Submit", key="submit_button", help="このボタンをクリックしてアクションを実行します"):
             try:
-                command = f"python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} \
-                    --model {model} --main_metric {main_metric} --sub_metric"
-                for metric in sub_metric:
-                    command += f" {metric}"
-                command += f" --machine_type {machine_type} --is_train"
+                command = f"python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} --model_name {model_name} --main_metric {main_metric} --machine_type {machine_type} --is_train"
                 proc = subprocess.run(command.split(" "), stdout=PIPE, stderr=PIPE)
-                print(proc.stdout.decode("utf-8").split("\n"))
-                st.text("Pipeline Execution Successed")
+                if len(proc.stdout.decode("utf-8")) == 0:
+                    st.text(proc.stderr.decode("utf-8"))
+                else:
+                    st.text(proc.stdout.decode("utf-8"))
             except Exception as e:
                 print(e)
                 st.text("Train Failed")

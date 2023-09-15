@@ -29,15 +29,13 @@ GCP_PROJECT_ID=your project id
 LOCATION=asia-northeast1
 AR_REPOSITORY_NAME=artifact registory repository name
 DATA_BUCKET=gs://xxx
+ARTIFACT_BUCKET=gs://yyy
 ```
 
-### other
+### Create Cloud Storage Bucket
 ```bash
 gsutil mb ${DATA_BUCKET}
-```
-## Boot MLflow Server
-```bash
-$ make mlflow
+gsutil mb ${ARTIFACT_BUCKET}
 ```
 
 ## Build & Push Docker Image
@@ -48,7 +46,12 @@ $ docker compose build
 $ docker compose push
 ```
 
-## Exec Pipeline
+## Boot Streamlit GUI
 ```bash
-$ make pipeline
+$ make streamlit
+```
+
+## Boot MLflow Server
+```bash
+$ make mlflow
 ```

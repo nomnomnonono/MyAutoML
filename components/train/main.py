@@ -14,9 +14,8 @@ AR_REPOSITORY_NAME = os.environ.get("AR_REPOSITORY_NAME")
 def train(
     data_type: str,
     target_task: str,
-    model: str,
+    model_name: str,
     main_metric: str,
-    sub_metric: list[str],
     dataset_uri: InputPath("Dataset"),
     artifact_uri: OutputPath("Model"),
     metrics: Output[Metrics],
@@ -29,9 +28,8 @@ def train(
             artifact_uri,
             metrics,
             target_task,
-            model,
+            model_name,
             main_metric,
-            sub_metric,
         )
     elif data_type == "text":
         pass
