@@ -1,12 +1,13 @@
-import os
-import streamlit as st
 import glob
-
-from google.cloud import storage
-from dotenv import load_dotenv
 import json
+import os
+import subprocess
 from io import BytesIO
-from exec_train import exec_train_job
+from subprocess import PIPE
+
+import streamlit as st
+from dotenv import load_dotenv
+from google.cloud import storage
 
 
 def upload(bucket, local_folder_path):
@@ -27,12 +28,23 @@ def get_dataset_list(bucket):
     blobs = bucket.list_blobs()
     return list(set([blob.name.split("/")[0] for blob in blobs]))
 
+
 def get_model_list(data_type, target_task):
     if data_type == "table":
         if target_task == "classification":
-            return ["LogisticRegression", "RandomForestClassifier", "XGBoostClassifier", "LightGBMClassifier"]
+            return [
+                "LogisticRegression",
+                "RandomForestClassifier",
+                "XGBoostClassifier",
+                "LightGBMClassifier",
+            ]
         elif target_task == "regression":
-            return ["LinearRegression", "RandomForestRegressor", "XGBoostRegressor", "LGMBRegressor"]
+            return [
+                "LinearRegression",
+                "RandomForestRegressor",
+                "XGBoostRegressor",
+                "LGMBRegressor",
+            ]
         else:
             return []
     elif data_type == "text":
@@ -44,7 +56,15 @@ def get_model_list(data_type, target_task):
             return []
     elif data_type == "image":
         if target_task == "classification":
-            return ["ResNet18", "ResNet34", "ResNet50", "EfficientNet", "EfficientNetV2", "MobileNetV2", "MobileNetV3"]
+            return [
+                "ResNet18",
+                "ResNet34",
+                "ResNet50",
+                "EfficientNet",
+                "EfficientNetV2",
+                "MobileNetV2",
+                "MobileNetV3",
+            ]
         elif target_task == "detection":
             return ["Faster R-CNN", "SSD", "YOLOv5"]
         elif target_task == "semantic-segmentation":
@@ -92,8 +112,14 @@ def main():
 
     with tab1:
         paths = glob.glob("data/*")
-        local_folder_path = st.selectbox("Select Dataset to Upload", [os.path.split(path)[-1] for path in paths])
-        if st.button("Click on the button to upload", key="upload_button", help='このボタンをクリックしてアクションを実行します'):
+        local_folder_path = st.selectbox(
+            "Select Dataset to Upload", [os.path.split(path)[-1] for path in paths]
+        )
+        if st.button(
+            "Click on the button to upload",
+            key="upload_button",
+            help="このボタンをクリックしてアクションを実行します",
+        ):
             try:
                 upload(bucket, local_folder_path)
                 st.text("Upload Success")
@@ -101,7 +127,8 @@ def main():
                 print(e)
                 st.text("Upload Failed")
 
-        st.markdown("""
+        st.markdown(
+            """
         #### フォルダ構造
         ```bash
         data/
@@ -180,7 +207,8 @@ def main():
         ...
         ```
         ターゲットラベルのカラム名は`target`とする。
-        """)
+        """
+        )
 
     with tab2:
         dataset = st.selectbox("Select Dataset", get_dataset_list(bucket))
@@ -190,14 +218,26 @@ def main():
         config = json.load(BytesIO(content))
         st.selectbox("Data Type", (config["data_type"],))
         st.selectbox("Target Task", (config["target_task"],))
-        model = st.selectbox("Model", get_model_list(config["data_type"], config["target_task"]))
-        main_metric = st.selectbox("Main Metric", get_metric_list(config["data_type"], config["target_task"]))
-        sub_metric = st.multiselect("Sub Metric", get_metric_list(config["data_type"], config["target_task"]))
+        model = st.selectbox(
+            "Model", get_model_list(config["data_type"], config["target_task"])
+        )
+        main_metric = st.selectbox(
+            "Main Metric", get_metric_list(config["data_type"], config["target_task"])
+        )
+        sub_metric = st.multiselect(
+            "Sub Metric", get_metric_list(config["data_type"], config["target_task"])
+        )
         machine_type = st.selectbox("Machine Type", ("n1-standard-4",))
-        if st.button("Submit", key='submit_button', help='このボタンをクリックしてアクションを実行します'):
+        if st.button("Submit", key="submit_button", help="このボタンをクリックしてアクションを実行します"):
             try:
-                exec_train_job(dataset, config["data_type"], config["target_task"], model, main_metric, sub_metric, machine_type)
-                st.text("Train Success")
+                command = f"python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} \
+                    --model {model} --main_metric {main_metric} --sub_metric"
+                for metric in sub_metric:
+                    command += f" {metric}"
+                command += f" --machine_type {machine_type} --is_train"
+                proc = subprocess.run(command.split(" "), stdout=PIPE, stderr=PIPE)
+                print(proc.stdout.decode("utf-8").split("\n"))
+                st.text("Pipeline Execution Successed")
             except Exception as e:
                 print(e)
                 st.text("Train Failed")

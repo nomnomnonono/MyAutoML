@@ -2,6 +2,7 @@
 *.ipynb
 .venv/
 __pycache__/
+.DS_Store
 *.csv
 *.json
 !schema.json
