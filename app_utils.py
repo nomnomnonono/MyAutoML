@@ -99,10 +99,10 @@ def parameter_selection(model_name: str) -> dict[str, list]:
                 "max_depth (int/None)  :  ", ["None", 5, 10], default=["None"]
             )
             min_samples_split = st.text_input(
-                label="min_samples_split (int/float)  :  ", value="2"
+                label="min_samples_split (int)  :  ", value="2"
             )
             min_samples_leaf = st.text_input(
-                label="min_samples_leaf (int/float)  :  ", value="1"
+                label="min_samples_leaf (int)  :  ", value="1"
             )
             max_features = st.multiselect(
                 "max_features (str/None)  :  ",
@@ -127,8 +127,8 @@ def parameter_selection(model_name: str) -> dict[str, list]:
                 "n_estimators": list(map(int, n_estimators.split(" "))),
                 "criterion": criterion,
                 "max_depth": max_depth,
-                "min_samples_split": list(map(float, min_samples_split.split(" "))),
-                "min_samples_leaf": list(map(float, min_samples_leaf.split(" "))),
+                "min_samples_split": list(map(int, min_samples_split.split(" "))),
+                "min_samples_leaf": list(map(int, min_samples_leaf.split(" "))),
                 "max_features": max_features,
             }
         elif model_name == "XGBoostClassifier":

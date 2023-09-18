@@ -6,10 +6,11 @@ from io import BytesIO
 from subprocess import PIPE
 
 import streamlit as st
+from app_utils import get_dataset_list, get_model_list, parameter_selection, upload
 from components.train.utils import get_metric_list
 from dotenv import load_dotenv
-from google.cloud import aiplatform, storage
-from utils import get_dataset_list, get_model_list, parameter_selection, upload
+from google.cloud import storage
+from mlflow_utils import update_mlflow
 
 load_dotenv(".env")
 
@@ -18,10 +19,31 @@ def main():
     client = storage.Client()
     bucket = client.bucket(os.environ.get("DATA_BUCKET").lstrip("gs://"))
 
+    with st.sidebar:
+        st.markdown(
+            """
+        ### MLflow
+        #### MLflowの起動
+        ```bash
+        $ make mlflow
+        ```
+        
+        #### MLflowのURL
+        http://127.0.0.1:5000/
+        
+        #### 実験結果をMLflowに反映
+        """
+        )
+        if st.button("Update MLflow"):
+            try:
+                update_mlflow()
+                st.text("Update Success")
+            except Exception as e:
+                print(e)
+                st.text("Update Failed")
+
     st.title("MyAutoML")
-    tab1, tab2, tab3, tab4 = st.tabs(
-        ["Upload Dataset", "Train Model", "DashBoard", "Deploy Model"]
-    )
+    tab1, tab2, tab3 = st.tabs(["Upload Dataset", "Train Model", "Deploy Model"])
 
     with tab1:
         paths = glob.glob("data/*")
@@ -33,12 +55,15 @@ def main():
             key="upload_button",
             help="このボタンをクリックしてアクションを実行します",
         ):
-            try:
-                upload(bucket, os.path.join("data", local_folder_path))
-                st.text("Upload Success")
-            except Exception as e:
-                print(e)
-                st.text("Upload Failed")
+            if len(local_folder_path.split("-")) != 1:
+                st.text("Invalid Folder Name: Do not use '-' in the folder name")
+            else:
+                try:
+                    upload(bucket, os.path.join("data", local_folder_path))
+                    st.text("Upload Success")
+                except Exception as e:
+                    print(e)
+                    st.text("Upload Failed")
 
         st.markdown(
             """
@@ -153,9 +178,6 @@ def main():
                 st.text("Train Failed")
 
     with tab3:
-        pass
-
-    with tab4:
         st.selectbox("Select Model to Deploy", ("select1", "select2"))
 
 
