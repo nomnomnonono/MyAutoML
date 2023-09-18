@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from kfp.v2.dsl import OutputPath, component
+from kfp.v2.dsl import Dataset, OutputPath, component
 
 load_dotenv(".env")
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
@@ -12,7 +12,7 @@ AR_REPOSITORY_NAME = os.environ.get("AR_REPOSITORY_NAME")
     base_image=f"asia-northeast1-docker.pkg.dev/{PROJECT_ID}/{AR_REPOSITORY_NAME}/preprocess:latest"
 )
 def preprocess(
-    data_path: str, data_type: str, target_task: str, dataset_uri: OutputPath("Dataset")
+    data_path: str, data_type: str, target_task: str, dataset_uri: OutputPath(Dataset)
 ) -> None:
     import glob
     import os

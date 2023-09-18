@@ -41,17 +41,13 @@ def pipeline(
             target_task=target_task,
         )
 
-        params = json.loads(params.replace("'", '"'))
-        for key, values in params.items():
-            params[key] = [None if value == "None" else value for value in values]
-
         train_op = train(
             dataset_uri=preprocess_op.output,
             data_type=data_type,
             target_task=target_task,
             model_name=model_name,
             main_metric=main_metric,
-            params=json.loads(params.replace("'", '"')),
+            params=params,
         )
         train_op.custom_job_spec = {
             "jobSpec": {
@@ -85,12 +81,13 @@ def pipeline(
 
 
 def exec_pipeline(
-    dataset,
-    data_type,
-    target_task,
-    model_name,
-    main_metric,
-    machine_type,
+    dataset: str,
+    data_type: str,
+    target_task: str,
+    model_name: str,
+    main_metric: str,
+    machine_type: str,
+    params: str,
     is_train=True,
 ):
     compiler.Compiler().compile(
@@ -114,6 +111,7 @@ def exec_pipeline(
             "model_name": model_name,
             "main_metric": main_metric,
             "machine_type": machine_type,
+            "params": params,
             "is_train": is_train,
         },
     )

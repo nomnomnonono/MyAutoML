@@ -8,7 +8,7 @@ from subprocess import PIPE
 import streamlit as st
 from components.train.utils import get_metric_list
 from dotenv import load_dotenv
-from google.cloud import storage
+from google.cloud import aiplatform, storage
 from utils import get_dataset_list, get_model_list, parameter_selection, upload
 
 load_dotenv(".env")
@@ -19,7 +19,9 @@ def main():
     bucket = client.bucket(os.environ.get("DATA_BUCKET").lstrip("gs://"))
 
     st.title("MyAutoML")
-    tab1, tab2, tab3 = st.tabs(["Upload Dataset", "Train Model", "Deploy Model"])
+    tab1, tab2, tab3, tab4 = st.tabs(
+        ["Upload Dataset", "Train Model", "DashBoard", "Deploy Model"]
+    )
 
     with tab1:
         paths = glob.glob("data/*")
@@ -140,7 +142,7 @@ def main():
         params = str(params).replace(" ", "")
         if st.button("Submit", key="submit_button", help="このボタンをクリックしてアクションを実行します"):
             try:
-                command = f"python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} --model_name {model_name} --main_metric {main_metric} --machine_type {machine_type} --params params --is_train"
+                command = f"poetry run python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} --model_name {model_name} --main_metric {main_metric} --machine_type {machine_type} --params {params} --is_train"
                 proc = subprocess.run(command.split(" "), stdout=PIPE, stderr=PIPE)
                 if len(proc.stdout.decode("utf-8")) == 0:
                     st.text(proc.stderr.decode("utf-8"))
@@ -151,6 +153,9 @@ def main():
                 st.text("Train Failed")
 
     with tab3:
+        pass
+
+    with tab4:
         st.selectbox("Select Model to Deploy", ("select1", "select2"))
 
 
