@@ -21,3 +21,7 @@ streamlit:
 .PHONY: mlflow
 mlflow:
 	poetry run mlflow ui
+
+.PHONY: update_mlflow
+update_mlflow:
+	poetry run python mlflow_utils.py

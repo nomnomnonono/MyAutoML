@@ -49,7 +49,13 @@ $ docker compose push
 $ make streamlit
 ```
 
-## Boot MLflow Server
+## MLflow
+### Boot MLflow
 ```bash
 $ make mlflow
+```
+
+### Update Experiment Results on MLflow
+```bash
+$ make update_mlflow
 ```
