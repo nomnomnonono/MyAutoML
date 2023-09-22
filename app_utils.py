@@ -29,7 +29,7 @@ def get_model_list(data_type: str, target_task: str) -> list[str]:
                 "LogisticRegression",
                 "RandomForestClassifier",
                 "XGBoostClassifier",
-                "LightGBMClassifier",
+                "LGBMClassifier",
             ]
         elif target_task == "regression":
             return [

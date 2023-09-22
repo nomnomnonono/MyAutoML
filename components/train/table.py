@@ -132,7 +132,14 @@ def train_table(
             "test": (x_test, y_test),
         }.items():
             pred = model.predict(data[0])
-            log_table_metrics(split, data[1], pred, metric_list, metrics)
+            log_table_metrics(
+                split,
+                data[1],
+                pred,
+                metric_list,
+                metrics,
+                is_multi=len(y_train.unique()) != 2,
+            )
 
     else:
         raise ValueError(f"Invalid target_task: {target_task}")
@@ -147,4 +154,7 @@ def train_table(
 
     # save best parameters
     with open(model_dir / "params.json", "w") as f:
+        json.dump(params, f, indent=4)
+
+    with open(model_dir / "best_params.json", "w") as f:
         json.dump(best_params, f, indent=4)

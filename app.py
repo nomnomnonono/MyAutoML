@@ -21,14 +21,17 @@ def main():
 
     with st.sidebar:
         st.markdown(
-            """
+            f"""
+        ### Vertex AI Pipelines
+        [Dashboard Link](https://console.cloud.google.com/vertex-ai/pipelines/runs?hl=ja&project={os.environ.get('GCP_PROJECT_ID')})
+
         ### MLflow
         #### MLflowの起動
         ```bash
         $ make mlflow
         ```
         
-        #### MLflowのURL
+        #### MLflowサーバーのURL
         http://127.0.0.1:5000/
         
         #### 実験結果をMLflowに反映
