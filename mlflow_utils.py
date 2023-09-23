@@ -22,10 +22,10 @@ def log_metric(expetiment_name, metadata, params):
                 mlflow.log_param(key, "gs://" + value.lstrip("/gcs/"))
             else:
                 mlflow.log_metric(key, value)
-        
+
         for key, value in params.items():
             mlflow.log_param(key, value)
-    
+
     with open(".mlflow_history.txt", "a") as f:
         f.write(expetiment_name + "\n")
 
@@ -56,7 +56,11 @@ def update_mlflow():
                 result = json.load(BytesIO(content))
                 params = result
 
-        if metadata is not None and params is not None and experiment_name not in history:
+        if (
+            metadata is not None
+            and params is not None
+            and experiment_name not in history
+        ):
             log_metric(experiment_name, metadata, params)
 
 
