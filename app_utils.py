@@ -22,21 +22,49 @@ def get_dataset_list(bucket):
     return list(set([blob.name.split("/")[0] for blob in blobs]))
 
 
+def get_metric_list(data_type, target_task):
+    if data_type == "table":
+        if target_task == "classification":
+            return ["Accuracy", "Precision", "Recall", "F1", "AUC"]
+        elif target_task == "regression":
+            return ["MSE", "RMSE", "MAE", "R2"]
+        else:
+            return []
+    elif data_type == "text":
+        if target_task == "classification":
+            return ["Accuracy", "Precision", "Recall", "F1", "AUC"]
+        elif target_task == "summarization":
+            return ["BLEU", "ROUGE", "BERTScore", "METEOR"]
+        else:
+            return []
+    elif data_type == "image":
+        if target_task == "classification":
+            return ["Accuracy", "Precision", "Recall", "F1", "AUC"]
+        elif target_task == "detection":
+            return ["mAP", "IoU"]
+        elif target_task == "semantic-segmentation":
+            return ["mIoU", "IoU", "Dice", "Jaccard"]
+        else:
+            return []
+    else:
+        raise ValueError("data_type must be table, text or image")
+
+
 def get_model_list(data_type: str, target_task: str) -> list[str]:
     if data_type == "table":
         if target_task == "classification":
             return [
                 "LogisticRegression",
                 "RandomForestClassifier",
-                "XGBoostClassifier",
+                "XGBClassifier",
                 "LGBMClassifier",
             ]
         elif target_task == "regression":
             return [
                 "LinearRegression",
                 "RandomForestRegressor",
-                "XGBoostRegressor",
-                "LGMBRegressor",
+                "XGBRegressor",
+                "LGBMRegressor",
             ]
         else:
             return []
@@ -131,13 +159,13 @@ def parameter_selection(model_name: str) -> dict[str, list]:
                 "min_samples_leaf": list(map(int, min_samples_leaf.split(" "))),
                 "max_features": max_features,
             }
-        elif model_name == "XGBoostClassifier":
+        elif model_name == "XGBClassifier":
             pass
-        elif model_name == "XGBoostRegressor":
+        elif model_name == "XGBRegressor":
             pass
-        elif model_name == "LightGBMClassifier":
+        elif model_name == "LGBMClassifier":
             pass
-        elif model_name == "LGMBRegressor":
+        elif model_name == "LGBMRegressor":
             pass
         # text
         elif model_name == "TF-IDF + LogisticRegression":

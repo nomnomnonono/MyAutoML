@@ -1,16 +1,11 @@
-import itertools
 import json
 from pathlib import Path
 
 import joblib
-import lightgbm as lgb
-import xgboost as xgb
+import optuna
 from kfp.v2.dsl import InputPath, Metrics, Output, OutputPath
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from objective import TableObjective
 from table_utils import get_table_dataset, get_table_metric_dict, log_table_metrics
-
-SEEDS = [42]
 
 
 def train_table(
@@ -35,114 +30,36 @@ def train_table(
     else:
         raise ValueError(f"Invalid metric list: {main_metric}")
 
-    if target_task == "classification":
-        if model_name == "LogisticRegression":
-            model_obj = LogisticRegression
-        elif model_name == "RandomForestClassifier":
-            model_obj = RandomForestClassifier
-        elif model_name == "LightGBMClassifier":
-            model_obj = lgb.LGBMClassifier
-        elif model_name == "XGBoostClassifier":
-            model_obj = xgb.XGBClassifier
-        else:
-            raise ValueError(f"Invalid model: {model_name}")
+    objective = TableObjective(
+        x_train=x_train,
+        y_train=y_train,
+        model_name=model_name,
+        main_metric=main_metric,
+        x_valid=x_valid,
+        y_valid=y_valid,
+    )
 
-        # parameter search phase
-        keys = list(params.keys())
-        model, best_score, best_params = None, 0, {}
-        for param in list(itertools.product(*list(params.values()))):
-            _model = model_obj(**dict(zip(keys, param)))
-            _model.fit(x_train, y_train)
-            pred = _model.predict(x_valid)
-            score = main_metric(y_valid, pred)
+    study = optuna.create_study(direction="maximize" if is_high else "minimize")
+    study.optimize(objective, n_trials=100)
 
-            # update best model according to main metric
-            if is_high and score > best_score:
-                best_score = score
-                model = _model
-                best_params = dict(zip(keys, param))
-            elif not is_high and score < best_score:
-                best_score = score
-                model = _model
-                best_params = dict(zip(keys, param))
+    # log best metrics
+    best_model = objective.create_model(study.best_params)
+    best_model.fit(x_train, y_train)
 
-        # log metrics for all data splits
-        model = model_obj(**best_params)
-        model.fit(x_train, y_train)
-        for split, data in {
-            "train": (x_train, y_train),
-            "valid": (x_valid, y_valid),
-            "test": (x_test, y_test),
-        }.items():
-            pred = model.predict(data[0])
-            log_table_metrics(
-                split,
-                data[1],
-                pred,
-                metric_list,
-                metrics,
-                is_multi=len(y_train.unique()) != 2,
-            )
-
-    elif target_task == "regression":
-        if model_name == "LinearRegression":
-            model = LinearRegression
-        elif model_name == "RandomForestRegressor":
-            model = RandomForestRegressor
-        elif model_name == "LightGBMRegressor":
-            model = lgb.LGBMRegressor
-            params = {
-                "objective": "regression",
-                "random_state": SEEDS,
-            }
-        elif model_name == "XGBoostRegressor":
-            model = xgb.XGBRegressor
-            params = {
-                "objective": "reg:squarederror",
-                "random_state": SEEDS,
-            }
-        else:
-            raise ValueError(f"Invalid model: {model_name}")
-
-        # parameter search phase
-        keys = list(params.keys())
-        model, best_score, best_params = None, 0, {}
-        for param in list(itertools.product(*list(params.values()))):
-            _model = model_obj(**dict(zip(keys, param)))
-            _model.fit(x_train, y_train)
-            pred = _model.predict(x_valid)
-            score = main_metric(y_valid, pred)
-
-            # update best model according to main metric
-            if is_high and score > best_score:
-                best_score = score
-                model = _model
-                best_params = dict(zip(keys, param))
-            elif not is_high and score < best_score:
-                best_score = score
-                model = _model
-                best_params = dict(zip(keys, param))
-
-        # log metrics for all data splits
-        model = model_obj(**best_params)
-        model.fit(x_train, y_train)
-        for split, data in {
-            "train": (x_train, y_train),
-            "valid": (x_valid, y_valid),
-            "test": (x_test, y_test),
-        }.items():
-            pred = model.predict(data[0])
-            log_table_metrics(
-                split,
-                data[1],
-                pred,
-                metric_list,
-                metrics,
-                is_multi=len(y_train.unique()) != 2,
-            )
-
-    else:
-        raise ValueError(f"Invalid target_task: {target_task}")
+    for split, data in {
+        "train": (x_train, y_train),
+        "valid": (x_valid, y_valid),
+        "test": (x_test, y_test),
+    }.items():
+        pred = best_model.predict(data[0])
+        log_table_metrics(
+            split,
+            data[1],
+            pred,
+            metric_list,
+            metrics,
+            is_multi=len(y_train.unique()) != 2,
+        )
 
     # log artifact uri
     metrics.log_metric("model_uri", artifact_uri)
@@ -150,11 +67,11 @@ def train_table(
     # save model
     model_dir = Path(artifact_uri)
     model_dir.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, model_dir / "model.joblib")
+    joblib.dump(best_model, model_dir / "model.joblib")
 
-    # save best parameters
+    # save parameters
     with open(model_dir / "params.json", "w") as f:
         json.dump(params, f, indent=4)
 
     with open(model_dir / "best_params.json", "w") as f:
-        json.dump(best_params, f, indent=4)
+        json.dump(study.best_params, f, indent=4)
