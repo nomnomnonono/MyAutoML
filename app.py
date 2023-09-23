@@ -10,7 +10,6 @@ from app_utils import (
     get_dataset_list,
     get_metric_list,
     get_model_list,
-    parameter_selection,
     upload,
 )
 from dotenv import load_dotenv
