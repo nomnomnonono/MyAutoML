@@ -31,14 +31,12 @@ def pipeline(
     model_name: str,
     main_metric: str,
     machine_type: str,
-    params: str,
     is_train: bool,
 ) -> None:
     if is_train:
         preprocess_op = preprocess(
             data_path=dataset,
             data_type=data_type,
-            target_task=target_task,
         )
 
         train_op = train(
@@ -86,7 +84,6 @@ def exec_pipeline(
     model_name: str,
     main_metric: str,
     machine_type: str,
-    params: str,
     is_train=True,
 ):
     compiler.Compiler().compile(
@@ -110,7 +107,6 @@ def exec_pipeline(
             "model_name": model_name,
             "main_metric": main_metric,
             "machine_type": machine_type,
-            "params": params,
             "is_train": is_train,
         },
     )
@@ -127,7 +123,6 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", type=str)
     parser.add_argument("--main_metric", type=str)
     parser.add_argument("--machine_type", type=str)
-    parser.add_argument("--params", type=str)
     parser.add_argument("--is_train", action="store_true")
     args = parser.parse_args()
 

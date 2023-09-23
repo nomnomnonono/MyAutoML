@@ -195,16 +195,14 @@ def main():
             "Main Metric", get_metric_list(config["data_type"], config["target_task"])
         )
         machine_type = st.selectbox("Machine Type", ("n1-standard-4",))
-        params = parameter_selection(model_name)
-        params = str(params).replace(" ", "")
+
         if st.button("Submit", key="submit_button", help="このボタンをクリックしてアクションを実行します"):
-            command = f"poetry run python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} --model_name {model_name} --main_metric {main_metric} --machine_type {machine_type} --params {params} --is_train"
+            command = f"poetry run python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} --model_name {model_name} --main_metric {main_metric} --machine_type {machine_type} --is_train"
             proc = subprocess.run(command.split(" "), stdout=PIPE, stderr=PIPE)
             if len(proc.stdout.decode("utf-8")) == 0:
                 st.text(proc.stderr.decode("utf-8"))
             else:
                 st.text(proc.stdout.decode("utf-8"))
-                st.text("Train Failed")
 
     with tab3:
         st.selectbox("Select Model to Deploy", ("select1", "select2"))
