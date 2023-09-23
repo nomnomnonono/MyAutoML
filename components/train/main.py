@@ -17,7 +17,6 @@ def train(
     target_task: str,
     model_name: str,
     main_metric: str,
-    params: str,
     artifact_uri: OutputPath("Model"),
     metrics: Output[Metrics],
 ) -> None:
@@ -29,7 +28,6 @@ def train(
             target_task=target_task,
             model_name=model_name,
             main_metric=main_metric,
-            params=params,
             artifact_uri=artifact_uri,
             metrics=metrics,
         )

@@ -13,14 +13,9 @@ def train_table(
     target_task: str,
     model_name: str,
     main_metric: str,
-    params: str,
     artifact_uri: OutputPath("Model"),
     metrics: Output[Metrics],
 ) -> None:
-    params = json.loads(params.replace("'", '"'))
-    for key, values in params.items():
-        params[key] = [None if value == "None" else value for value in values]
-
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_table_dataset(dataset_uri)
     metric_list = get_table_metric_dict(target_task)
     if len(metric_list[main_metric]) == 2:
@@ -70,8 +65,5 @@ def train_table(
     joblib.dump(best_model, model_dir / "model.joblib")
 
     # save parameters
-    with open(model_dir / "params.json", "w") as f:
-        json.dump(params, f, indent=4)
-
     with open(model_dir / "best_params.json", "w") as f:
         json.dump(study.best_params, f, indent=4)

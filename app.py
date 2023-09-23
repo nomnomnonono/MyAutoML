@@ -6,7 +6,13 @@ from io import BytesIO
 from subprocess import PIPE
 
 import streamlit as st
-from app_utils import get_dataset_list, get_metric_list, get_model_list, parameter_selection, upload
+from app_utils import (
+    get_dataset_list,
+    get_metric_list,
+    get_model_list,
+    parameter_selection,
+    upload,
+)
 from dotenv import load_dotenv
 from google.cloud import storage
 from mlflow_utils import update_mlflow
@@ -43,6 +49,14 @@ def main():
             except Exception as e:
                 print(e)
                 st.text("Update Failed")
+        st.markdown(
+            """
+        ##### コマンドラインから実行
+        ```bash
+        $ make update_mlflow
+        ```
+        """
+        )
 
     st.title("MyAutoML")
     tab1, tab2, tab3 = st.tabs(["Upload Dataset", "Train Model", "Deploy Model"])

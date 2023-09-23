@@ -47,7 +47,6 @@ def pipeline(
             target_task=target_task,
             model_name=model_name,
             main_metric=main_metric,
-            params=params,
         )
         train_op.custom_job_spec = {
             "jobSpec": {
