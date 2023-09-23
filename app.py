@@ -25,6 +25,7 @@ def main():
     bucket = client.bucket(os.environ.get("DATA_BUCKET").lstrip("gs://"))
 
     with st.sidebar:
+        output_text = ""
         st.markdown(
             f"""
         ### Vertex AI Pipelines
@@ -32,6 +33,18 @@ def main():
 
         ### MLflow
         #### MLflowの起動
+        """
+        )
+        if st.button("Boot MLflow"):
+            proc = subprocess.run(["make", "mlflow"], stdout=PIPE, stderr=PIPE)
+            if len(proc.stdout.decode("utf-8")) == 0:
+                output_text = proc.stderr.decode("utf-8")
+                output_text += "\nBoot Failed"
+            else:
+                # st.text(proc.stdout.decode("utf-8"))
+                output_text = "Boot Success"
+        st.markdown(
+            """
         ```bash
         $ make mlflow
         ```
@@ -45,15 +58,18 @@ def main():
         if st.button("Update MLflow"):
             try:
                 update_mlflow()
-                st.text("Update Success")
+                output_text = "Update Success"
             except Exception as e:
-                print(e)
-                st.text("Update Failed")
+                output_text = e
+                output_text += "\nUpdate Failed"
         st.markdown(
-            """
-        ##### コマンドラインから実行
+            f"""
         ```bash
         $ make update_mlflow
+        ```
+        #### 出力メッセージ
+        ```bash
+        {output_text}
         ```
         """
         )
@@ -182,15 +198,12 @@ def main():
         params = parameter_selection(model_name)
         params = str(params).replace(" ", "")
         if st.button("Submit", key="submit_button", help="このボタンをクリックしてアクションを実行します"):
-            try:
-                command = f"poetry run python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} --model_name {model_name} --main_metric {main_metric} --machine_type {machine_type} --params {params} --is_train"
-                proc = subprocess.run(command.split(" "), stdout=PIPE, stderr=PIPE)
-                if len(proc.stdout.decode("utf-8")) == 0:
-                    st.text(proc.stderr.decode("utf-8"))
-                else:
-                    st.text(proc.stdout.decode("utf-8"))
-            except Exception as e:
-                print(e)
+            command = f"poetry run python pipeline.py --dataset {dataset} --data_type {config['data_type']} --target_task {config['target_task']} --model_name {model_name} --main_metric {main_metric} --machine_type {machine_type} --params {params} --is_train"
+            proc = subprocess.run(command.split(" "), stdout=PIPE, stderr=PIPE)
+            if len(proc.stdout.decode("utf-8")) == 0:
+                st.text(proc.stderr.decode("utf-8"))
+            else:
+                st.text(proc.stdout.decode("utf-8"))
                 st.text("Train Failed")
 
     with tab3:
